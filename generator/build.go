@@ -62,6 +62,18 @@ func BuildOptions() {
 	host, _ := url.Parse(hostUrl)
 	host.Path = path.Join(host.Path, viper.GetString("index-name"))
 	viper.Set("page-url", host.String())
+
+	// manifest-software-package
+	v = viper.GetString("manifest-software-package")
+	if len(v) == 0 {
+		log.Fatal("manifest-software-package is empty")
+	}
+
+	if _, err := url.ParseRequestURI(v); err != nil {
+		host, _ := url.Parse(hostUrl)
+		host.Path = path.Join(host.Path, v)
+		viper.Set("manifest-software-package", host.String())
+	}
 }
 
 func ParseIPA() {
