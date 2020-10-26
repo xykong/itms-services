@@ -93,7 +93,7 @@ func templateIndexHtml() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "template/index.html", size: 3661, mode: os.FileMode(420), modTime: time.Unix(1603641212, 0)}
+	info := bindataFileInfo{name: "template/index.html", size: 0, mode: os.FileMode(0), modTime: time.Unix(0, 0)}
 	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
@@ -113,7 +113,7 @@ func templateManifestPlist() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "template/manifest.plist", size: 1151, mode: os.FileMode(420), modTime: time.Unix(1603640607, 0)}
+	info := bindataFileInfo{name: "template/manifest.plist", size: 0, mode: os.FileMode(0), modTime: time.Unix(0, 0)}
 	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
