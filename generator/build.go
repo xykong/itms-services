@@ -58,6 +58,10 @@ func BuildOptions() {
 		viper.Set("manifest-full-size-image", host.String())
 	}
 
+	// page-url
+	host, _ := url.Parse(hostUrl)
+	host.Path = path.Join(host.Path, viper.GetString("index-name"))
+	viper.Set("page-url", host.String())
 }
 
 func ParseIPA() {
@@ -134,6 +138,7 @@ func BuildIndex() {
 		DisplayImage         string
 		IndexName            string
 		ManifestName         string
+		PageUrl              string
 	}{
 		DisplayImage:         viper.GetString("display-image"),
 		Platform:             viper.GetString("index-platform"),
@@ -146,6 +151,7 @@ func BuildIndex() {
 		InstallButtonText:    viper.GetString("index-install-button-text"),
 		IndexName:            viper.GetString("index-name"),
 		ManifestName:         viper.GetString("manifest-name"),
+		PageUrl:              viper.GetString("page-url"),
 	}
 
 	outputFilename := path.Join(viper.GetString("output"), viper.GetString("index-name"))

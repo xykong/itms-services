@@ -82,7 +82,8 @@
 
 <script type="text/javascript">
     const qrcode = new QRCode(document.getElementById('qrcode'), {
-        text: window.location.href,
+        // text: window.location.href,
+        text: "{{.PageUrl}}",
         width: 256,
         height: 256,
         colorDark: '#000000',
