@@ -25,7 +25,7 @@ import (
 
 // buildCmd represents the build command
 var buildCmd = &cobra.Command{
-	Use:   "build",
+	Use:   "build [ipa]",
 	Short: "A brief description of your command",
 	Long: `A longer description that spans multiple lines and likely contains examples
 and usage of using your command. For example:
@@ -33,8 +33,14 @@ and usage of using your command. For example:
 Cobra is a CLI library for Go that empowers applications.
 This application is a tool to generate the needed files
 to quickly create a Cobra application.`,
+	Args: cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println("build called")
+
+		if len(args) > 0 {
+			viper.Set("ipa", args[0])
+		}
+
 		generator.Build()
 	},
 }
@@ -42,64 +48,65 @@ to quickly create a Cobra application.`,
 func init() {
 	rootCmd.AddCommand(buildCmd)
 
-	bindOptions(buildCmd, "output", "o", "./output",
+	bindOptions(buildCmd, false, "output", "o", "./output",
 		"Optional name of the output path to be generated.")
 
-	bindOptions(buildCmd, "host-url", "", "https://example.com",
-		"itms-services host address in server.")
+	bindOptions(buildCmd, true, "host-url", "", "",
+		"itms-services host address in server. example: https://example.com")
 
-	bindOptions(buildCmd, "title", "t", "Test app",
+	bindOptions(buildCmd, false, "title", "t", "Test app",
 		"title shows in install alert dialog and all pages.")
 
-	bindOptions(buildCmd, "bundle-identifier", "", "com.example.sample",
-		"iOS app bundle identifier, same as bundleID in ipa.")
+	bindOptions(buildCmd, false, "bundle-identifier", "", "",
+		"iOS app bundle identifier, same as CFBundleIdentifier in ipa.")
 
-	bindOptions(buildCmd, "bundle-version", "", "1.0",
+	bindOptions(buildCmd, false, "bundle-version", "", "1.0",
 		"iOS app bundle version, same as CFBundleVersion in ipa.")
 
-	bindOptions(buildCmd, "build-number", "", "123456",
+	bindOptions(buildCmd, false, "build-number", "", "0",
 		"iOS app context of the build number.")
 
 	// options for manifest.plist
 
-	bindOptions(buildCmd, "manifest-name", "", "manifest.plist",
+	bindOptions(buildCmd, false, "manifest-name", "", "manifest.plist",
 		"Optional name of the output manifest file name to be generated.")
 
-	bindOptions(buildCmd, "manifest-software-package", "",
-		"https://example.com/install/sample.ipa",
-		"manifest.plist template context of software-package.")
+	bindOptions(buildCmd, true, "manifest-software-package", "", "",
+		"manifest.plist template context of software-package. example: https://example.com/install/sample.ipa")
 
-	bindOptions(buildCmd, "manifest-display-image", "",
-		"https://example.com/assets/display-image.png",
-		"manifest.plist template context of display-image.")
+	bindOptions(buildCmd, true, "display-image", "", "",
+		"manifest.plist and index.html template context of display-image. example: https://example.com/assets/display-image.png")
 
-	bindOptions(buildCmd, "manifest-full-size-image", "",
-		"https://example.com/assets/full-size-image.png",
-		"manifest.plist template context of full-size-image.")
+	bindOptions(buildCmd, false, "manifest-full-size-image", "", "",
+		"manifest.plist template context of full-size-image. example: https://example.com/assets/full-size-image.png")
 
-	bindOptions(buildCmd, "manifest-subtitle", "", "a display subtitle",
+	bindOptions(buildCmd, false, "manifest-subtitle", "", "",
 		"manifest.plist template context of subtitle.")
 
 	// options for index.html
 
-	bindOptions(buildCmd, "index-name", "", "index.html",
+	bindOptions(buildCmd, false, "index-name", "", "index.html",
 		"Optional name of the output html file name to be generated.")
 
-	bindOptions(buildCmd, "index-platform", "", "iOS",
+	bindOptions(buildCmd, false, "index-platform", "", "iOS",
 		"index.html template context of platform.")
 
-	bindOptions(buildCmd, "index-branch", "", "trunk",
+	bindOptions(buildCmd, false, "index-branch", "", "trunk",
 		"index.html template context of build code branch.")
 
-	bindOptions(buildCmd, "index-jumbotron-description", "",
+	bindOptions(buildCmd, false, "index-jumbotron-description", "",
 		"Scan the QR code to open this page on your iPhone, click the button to install",
 		"index.html template context of jumbotron description.")
 
-	bindOptions(buildCmd, "index-install-button-text", "", "Install",
+	bindOptions(buildCmd, false, "index-install-button-text", "", "Install",
 		"index.html template context of install button text.")
 }
 
-func bindOptions(cmd *cobra.Command, name, shorthand string, value string, usage string) {
+func bindOptions(cmd *cobra.Command, required bool, name, shorthand string, value string, usage string) {
 	cmd.PersistentFlags().StringP(name, shorthand, value, usage)
 	_ = viper.BindPFlag(name, cmd.PersistentFlags().Lookup(name))
+
+	if required {
+		_ = cmd.MarkPersistentFlagRequired(name)
+	}
 }
