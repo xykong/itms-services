@@ -1,17 +1,18 @@
 package generator
 
 import (
-	"github.com/spf13/viper"
-	"github.com/xykong/itms-services/ipa"
 	"log"
 	"net/url"
 	"os"
 	"path"
 	"path/filepath"
 	"text/template"
+
+	"github.com/spf13/viper"
+	"github.com/xykong/itms-services/ipa"
 )
 
-// Build itms-services required index.html and manifest.plist
+// Build generates the itms-services required index.html and manifest.plist.
 func Build() {
 	BuildOptions()
 	ParseIPA()
@@ -25,11 +26,10 @@ func check(err error) {
 	}
 }
 
+// BuildOptions validates and normalises all URL-related options.
 func BuildOptions() {
-
-	hostUrl := viper.GetString("host-url")
-
-	_, err := url.ParseRequestURI(hostUrl)
+	hostURL := viper.GetString("host-url")
+	_, err := url.ParseRequestURI(hostURL)
 	check(err)
 
 	// display-image
@@ -37,9 +37,8 @@ func BuildOptions() {
 	if len(v) == 0 {
 		log.Fatal("display-image is empty")
 	}
-
 	if _, err := url.ParseRequestURI(v); err != nil {
-		host, _ := url.Parse(hostUrl)
+		host, _ := url.Parse(hostURL)
 		host.Path = path.Join(host.Path, v)
 		viper.Set("display-image", host.String())
 	}
@@ -47,19 +46,18 @@ func BuildOptions() {
 	// manifest-full-size-image
 	v = viper.GetString("manifest-full-size-image")
 	if len(v) == 0 {
-		log.Print("manifest-full-size-image is empty, use display-image value.")
+		log.Print("manifest-full-size-image is empty, using display-image value.")
 		v = viper.GetString("display-image")
 		viper.Set("manifest-full-size-image", v)
 	}
-
 	if _, err := url.ParseRequestURI(v); err != nil {
-		host, _ := url.Parse(hostUrl)
+		host, _ := url.Parse(hostURL)
 		host.Path = path.Join(host.Path, v)
 		viper.Set("manifest-full-size-image", host.String())
 	}
 
 	// page-url
-	host, _ := url.Parse(hostUrl)
+	host, _ := url.Parse(hostURL)
 	host.Path = path.Join(host.Path, viper.GetString("index-name"))
 	viper.Set("page-url", host.String())
 
@@ -68,38 +66,36 @@ func BuildOptions() {
 	if len(v) == 0 {
 		log.Fatal("manifest-software-package is empty")
 	}
-
 	if _, err := url.ParseRequestURI(v); err != nil {
-		host, _ := url.Parse(hostUrl)
+		host, _ := url.Parse(hostURL)
 		host.Path = path.Join(host.Path, v)
 		viper.Set("manifest-software-package", host.String())
 	}
 }
 
+// ParseIPA reads app metadata from the ipa file if provided.
 func ParseIPA() {
 	if !viper.IsSet("ipa") {
 		return
 	}
-
 	ipaPath := viper.GetString("ipa")
-
 	info, err := ipa.ParseIpa(ipaPath)
 	check(err)
 
-	//infoString, _ := json.MarshalIndent(info, "", "\t")
-	//log.Print(string(infoString))
-
-	viper.Set("title", info["CFBundleDisplayName"])
-	viper.Set("bundle-identifier", info["CFBundleIdentifier"])
-	viper.Set("bundle-version", info["CFBundleVersion"])
+	if v, ok := info["CFBundleDisplayName"].(string); ok {
+		viper.Set("title", v)
+	}
+	if v, ok := info["CFBundleIdentifier"].(string); ok {
+		viper.Set("bundle-identifier", v)
+	}
+	if v, ok := info["CFBundleVersion"].(string); ok {
+		viper.Set("bundle-version", v)
+	}
 }
 
-// Build manifest.plist
+// BuildManifest renders manifest.plist into the output directory.
 func BuildManifest() {
-	tpl, err := Asset("template/manifest.plist")
-	check(err)
-
-	t, err := template.New("manifest").Parse(string(tpl))
+	t, err := template.New("manifest").Parse(string(manifestTemplate))
 	check(err)
 
 	manifest := struct {
@@ -130,12 +126,9 @@ func BuildManifest() {
 	check(err)
 }
 
-// Build index.html
+// BuildIndex renders index.html into the output directory.
 func BuildIndex() {
-	tpl, err := Asset("template/index.html")
-	check(err)
-
-	t, err := template.New("index").Parse(string(tpl))
+	t, err := template.New("index").Parse(string(indexTemplate))
 	check(err)
 
 	index := struct {

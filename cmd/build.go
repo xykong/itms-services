@@ -5,7 +5,7 @@ Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
 
-    http://www.apache.org/licenses/LICENSE-2.0
+	http://www.apache.org/licenses/LICENSE-2.0
 
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
@@ -16,29 +16,46 @@ limitations under the License.
 package cmd
 
 import (
-	"fmt"
-	"github.com/spf13/viper"
-	"github.com/xykong/itms-services/generator"
+	"path/filepath"
 
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
+	"github.com/xykong/itms-services/generator"
 )
 
 // buildCmd represents the build command
 var buildCmd = &cobra.Command{
 	Use:   "build [ipa]",
-	Short: "A brief description of your command",
-	Long: `A longer description that spans multiple lines and likely contains examples
-and usage of using your command. For example:
+	Short: "Generate manifest.plist and index.html for OTA iOS installation",
+	Long: `Build reads metadata from the given .ipa file (or from explicit flags) and
+generates two files in the output directory:
 
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
-	Args: cobra.MinimumNArgs(1),
+  manifest.plist  — the Apple OTA manifest consumed by itms-services://
+  index.html      — a Bootstrap install page with a QR code and install button
+
+If an ipa path is provided, CFBundleDisplayName, CFBundleIdentifier and
+CFBundleVersion are read automatically from the archive.
+
+When --manifest-software-package is omitted and an ipa is given, the package
+URL defaults to <host-url>/<ipa-filename>.
+
+Example:
+  itms-services build MyApp.ipa \
+    --host-url https://example.com/install \
+    --display-image https://example.com/assets/icon.png`,
+	Args: cobra.MaximumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("build called")
-
 		if len(args) > 0 {
-			viper.Set("ipa", args[0])
+			ipaPath := args[0]
+			viper.Set("ipa", ipaPath)
+
+			// Auto-derive manifest-software-package from host-url + ipa filename
+			// when not explicitly set.
+			if viper.GetString("manifest-software-package") == "" {
+				hostURL := viper.GetString("host-url")
+				ipaName := filepath.Base(ipaPath)
+				viper.Set("manifest-software-package", hostURL+"/"+ipaName)
+			}
 		}
 
 		generator.Build()
